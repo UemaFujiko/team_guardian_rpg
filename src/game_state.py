@@ -8,7 +8,7 @@ import streamlit as st
 
 DEFAULT_GAME_STATE: dict[str, Any] = {
     "turn": 1,
-    "max_turns": 10,
+    "max_turns": 3,
     "difficulty": "標準",
     "team_type": "コンサル会社",
     "trust": 50,

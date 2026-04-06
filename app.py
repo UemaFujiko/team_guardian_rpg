@@ -21,14 +21,11 @@ POSITIVE_METRICS = [
     ("心理的安全性", "safety"),
     ("業績", "performance"),
     ("透明性", "transparency"),
-    ("証拠保全", "evidence"),
-    ("境界設定", "boundaries"),
-    ("被害保護", "protection"),
 ]
 
 RISK_METRICS = [
-    ("報復リスク", "retaliation_risk"),
-    ("組織汚染度", "contamination_risk"),
+    ("離職リスク", "attrition_risk"),
+    ("組織汚染度", "misconduct_risk"),
     ("分断リスク", "faction_risk"),
 ]
 
@@ -47,11 +44,8 @@ def metric_caption(name: str) -> str:
         "safety": "声を上げられる度合い",
         "performance": "短期の成果維持",
         "transparency": "意思決定の見える化",
-        "evidence": "記録・証拠保全の強さ",
-        "boundaries": "逸脱への線引きの強さ",
-        "protection": "被害者・通報者保護の強さ",
-        "retaliation_risk": "報復が起きる危険",
-        "contamination_risk": "例外化や隠蔽が広がる危険",
+        "attrition_risk": "離職や沈黙が進む危険",
+        "misconduct_risk": "不適切行動や隠蔽が広がる危険",
         "faction_risk": "関係者が分断される危険",
     }
     return descriptions.get(name, "")
@@ -71,35 +65,32 @@ def gauge(label: str, value: int, inverse: bool = False) -> None:
 def render_gauges(game, in_sidebar=False):
     target = st.sidebar if in_sidebar else st
 
-    # 防衛ゲージ
     target.markdown("### 防衛ゲージ")
-    target.write(f"証拠保全: {game.get('evidence', 0)}/100")
-    target.progress(int(game.get("evidence", 0)) / 100)
+    target.write(f"信頼: {game.get('trust', 50)}/100")
+    target.progress(int(game.get("trust", 50)) / 100)
 
-    target.write(f"境界設定: {game.get('boundary', 0)}/100")
-    target.progress(int(game.get("boundary", 0)) / 100)
+    target.write(f"心理的安全性: {game.get('safety', 50)}/100")
+    target.progress(int(game.get("safety", 50)) / 100)
 
-    target.write(f"被害者保護: {game.get('protection', 0)}/100")
-    target.progress(int(game.get("protection", 0)) / 100)
+    target.write(f"透明性: {game.get('transparency', 50)}/100")
+    target.progress(int(game.get("transparency", 50)) / 100)
 
     target.markdown("---")
 
-    # 危機ゲージ
     target.markdown("### 危機ゲージ")
-    target.write(f"組織汚染: {game.get('pollution', 0)}/100")
-    target.progress(int(game.get("pollution", 0)) / 100)
+    target.write(f"離職リスク: {game.get('attrition_risk', 50)}/100")
+    target.progress(int(game.get("attrition_risk", 50)) / 100)
 
-    target.write(f"報復リスク: {game.get('retaliation', 0)}/100")
-    target.progress(int(game.get("retaliation", 0)) / 100)
+    target.write(f"組織汚染度: {game.get('misconduct_risk', 50)}/100")
+    target.progress(int(game.get("misconduct_risk", 50)) / 100)
 
-    target.write(f"分析リスク: {game.get('analysis_risk', 0)}/100")
-    target.progress(int(game.get("analysis_risk", 0)) / 100)
+    target.write(f"分断リスク: {game.get('faction_risk', 50)}/100")
+    target.progress(int(game.get("faction_risk", 50)) / 100)
 
 
 def sidebar_controls() -> None:
     game = st.session_state.game
 
-    # 3ターン固定
     game["max_turns"] = 3
 
     turn = int(game.get("turn", 1))
@@ -127,31 +118,31 @@ def sidebar_controls() -> None:
         st.divider()
         st.subheader("防衛ゲージ")
 
-        evidence = int(game.get("evidence", 0))
-        boundaries = int(game.get("boundaries", 0))
-        protection = int(game.get("protection", 0))
+        trust = int(game.get("trust", 50))
+        safety = int(game.get("safety", 50))
+        transparency = int(game.get("transparency", 50))
 
-        st.progress(max(0.0, min(evidence / 100, 1.0)))
-        st.caption(f"証拠保全: {evidence}")
+        st.progress(max(0.0, min(trust / 100, 1.0)))
+        st.caption(f"信頼: {trust}")
 
-        st.progress(max(0.0, min(boundaries / 100, 1.0)))
-        st.caption(f"境界設定: {boundaries}")
+        st.progress(max(0.0, min(safety / 100, 1.0)))
+        st.caption(f"心理的安全性: {safety}")
 
-        st.progress(max(0.0, min(protection / 100, 1.0)))
-        st.caption(f"被害者保護: {protection}")
+        st.progress(max(0.0, min(transparency / 100, 1.0)))
+        st.caption(f"透明性: {transparency}")
 
         st.divider()
         st.subheader("危機ゲージ")
 
-        retaliation_risk = int(game.get("retaliation_risk", 0))
-        contamination_risk = int(game.get("contamination_risk", 0))
-        faction_risk = int(game.get("faction_risk", 0))
+        attrition_risk = int(game.get("attrition_risk", 50))
+        misconduct_risk = int(game.get("misconduct_risk", 50))
+        faction_risk = int(game.get("faction_risk", 50))
 
-        st.progress(max(0.0, min(retaliation_risk / 100, 1.0)))
-        st.caption(f"報復リスク: {retaliation_risk}")
+        st.progress(max(0.0, min(attrition_risk / 100, 1.0)))
+        st.caption(f"離職リスク: {attrition_risk}")
 
-        st.progress(max(0.0, min(contamination_risk / 100, 1.0)))
-        st.caption(f"組織汚染度: {contamination_risk}")
+        st.progress(max(0.0, min(misconduct_risk / 100, 1.0)))
+        st.caption(f"組織汚染度: {misconduct_risk}")
 
         st.progress(max(0.0, min(faction_risk / 100, 1.0)))
         st.caption(f"分断リスク: {faction_risk}")
@@ -249,7 +240,7 @@ def render_last_result() -> None:
     effects = last_result.get("effects", {})
     useful = {k: v for k, v in effects.items() if v != 0}
     if useful:
-        st.markdown("### AIによる影響の整理")
+        st.markdown("### あなたの3つの対応がもたらしたチームの状況")
         st.info(summarize_effects_as_ai_feedback(useful))
 
 
@@ -332,11 +323,8 @@ def summarize_effects_as_ai_feedback(effects: dict) -> str:
         "safety": "心理的安全性",
         "performance": "業績",
         "transparency": "透明性",
-        "evidence": "証拠保全",
-        "boundaries": "境界設定",
-        "protection": "被害者保護",
-        "retaliation_risk": "報復リスク",
-        "contamination_risk": "組織汚染度",
+        "attrition_risk": "離職リスク",
+        "misconduct_risk": "組織汚染度",
         "faction_risk": "分断リスク",
     }
 
@@ -349,8 +337,7 @@ def summarize_effects_as_ai_feedback(effects: dict) -> str:
 
         label = label_map.get(key, key)
 
-        # リスク系は「下がる」と良い変化
-        if key in ["retaliation_risk", "contamination_risk", "faction_risk"]:
+        if key in ["attrition_risk", "misconduct_risk", "faction_risk"]:
             if value < 0:
                 improved.append(f"{label}は少し下がりました")
             else:
@@ -371,7 +358,7 @@ def summarize_effects_as_ai_feedback(effects: dict) -> str:
     if not parts:
         return "今回の行動による目立った変化はありませんでした。"
 
-    return "AIの判断では、" + "。また、".join(parts) + "。"
+    return "" + "".join(parts) + "。"
 
 
     render_last_result()
