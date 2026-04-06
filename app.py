@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import pandas as pd
 import streamlit as st
+import hashlib
 
 from src.ai_client import get_model_name, is_ai_enabled
 from src.event_generator import STAGE_LABELS, generate_event
@@ -227,7 +228,7 @@ def render_last_result() -> None:
 
     last_result = st.session_state["last_result"]
     st.divider()
-    st.markdown("### 戦闘ログ")
+    st.markdown("### あなたの行動への分析")
     score = last_result.get("score", 0)
     if score >= 5:
         st.success(f"防衛成功: {last_result.get('reason', '')}")
@@ -312,20 +313,6 @@ def render_play() -> None:
             st.markdown("---")
     else:
         st.caption("現場ログはありません。")
-
-    st.markdown("### あなたの対応を選んでください")
-    choices = event.get("choices", [])
-    for idx, choice in enumerate(choices, start=1):
-        label = classify_choice(choice)
-        if st.button(f"{label} - {choice}", key=f"choice_{turn}_{idx}", use_container_width=True):
-            result = judge_choice(game, event, choice)
-            result_dict = result.model_dump() if hasattr(result, "model_dump") else dict(result)
-            apply_judgment(result_dict, choice)
-            st.session_state["last_result"] = result_dict
-            st.rerun()
-
-    render_last_result()
-
 
     st.markdown("### あなたの対応を選んでください")
     choices = event.get("choices", [])
