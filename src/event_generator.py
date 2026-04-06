@@ -11,9 +11,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 PROMPT_PATH = BASE_DIR / "prompts" / "event_prompt.txt"
 
 STAGE_LABELS = {
-    1: "異変の兆候",
-    2: "圧力の本体",
-    3: "最終防衛",
+    1: "異変への気づき",
+    2: "本質的な原因を探る",
+    3: "組織とヒトを守る",
 }
 
 FALLBACK_EVENTS = {

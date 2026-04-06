@@ -57,6 +57,7 @@ def metric_caption(name: str) -> str:
     return descriptions.get(name, "")
 
 
+
 def gauge(label: str, value: int, inverse: bool = False) -> None:
     shown = max(0, min(100, value))
     if inverse:
@@ -66,6 +67,7 @@ def gauge(label: str, value: int, inverse: bool = False) -> None:
         safe = 100 - shown
         st.write(f"**{label}**  {shown}/100")
         st.progress(shown)
+
 
 
 def render_gauges(game, in_sidebar=False):
@@ -94,6 +96,7 @@ def render_gauges(game, in_sidebar=False):
 
     target.write(f"分析リスク: {game.get('analysis_risk', 0)}/100")
     target.progress(int(game.get("analysis_risk", 0)) / 100)
+
 
 
 def sidebar_controls() -> None:
@@ -160,7 +163,6 @@ def sidebar_controls() -> None:
             reset_state()
             st.rerun()
 
-
 def render_home() -> None:
     st.title("🛡️ Team Guardian RPG - 3 Turn Mission")
     st.subheader("はじめに")
@@ -191,9 +193,9 @@ def render_home() -> None:
     )
 
 
-def render_mission_panel(show_title: bool = True) -> None:
-    if show_title:
-        st.subheader("ゲーム進行")
+
+def render_mission_panel() -> None:
+    st.subheader("ゲーム進行")
 
     current_turn = int(st.session_state.game.get("turn", 1))
     max_turns = int(st.session_state.game.get("max_turns", 3))
@@ -225,6 +227,7 @@ def classify_choice(choice: str) -> str:
     return COMMAND_LABELS["静観"]
 
 
+
 def render_last_result() -> None:
     if "last_result" not in st.session_state:
         return
@@ -249,34 +252,15 @@ def render_last_result() -> None:
     effects = last_result.get("effects", {})
     useful = {k: v for k, v in effects.items() if v != 0}
     if useful:
-        st.markdown("### AIによる影響の整理")
-        st.info(summarize_effects_as_ai_feedback(useful))
+        st.json(useful)
 
-
-def get_turn_event_for_hint(turn: int) -> dict:
-    current_game = st.session_state.game
-    temp_game = dict(current_game)
-    temp_game["turn"] = turn
-
-    try:
-        event = generate_event(temp_game)
-    except Exception:
-        event = {}
-
-    return event if isinstance(event, dict) else {}
 
 
 def render_play() -> None:
     game = st.session_state.game
 
-    top_left, top_right = st.columns([2.2, 1])
-
-    with top_left:
-        st.header("🎮 ゲーム")
-
-    with top_right:
-        st.markdown("### ゲーム進行")
-        render_mission_panel(show_title=False)
+    st.header("🎮 ゲーム")
+    render_mission_panel()
 
     if game.get("game_over", False):
         st.subheader("エンディング")
@@ -288,14 +272,26 @@ def render_play() -> None:
     turn = game.get("turn", 1)
     stage_name = STAGE_LABELS[turn]
 
-    st.divider()
-    st.subheader(f"TURN {turn}: {stage_name}")
-    st.markdown(f"### {event.get('event_title', 'イベント')}")
-    st.write(event.get("summary", ""))
+    top1, top2 = st.columns([1.45, 1])
+    with top1:
+        st.subheader(f"TURN {turn}: {stage_name}")
+        st.markdown(f"### {event.get('event_title', 'イベント')}")
+        st.write(event.get("summary", ""))
+        st.caption(f"リスクタグ: {' / '.join(event.get('risk_tags', []))}")
+        st.caption(f"兆候: {' / '.join(event.get('worldview_markers', []))}")
 
-    st.divider()
+    with top2:
+        st.info(
+            f"**深刻度**: {event.get('severity', '中')}\n\n"
+            f"**防衛重点**: {', '.join(event.get('defense_focus', []))}"
+        )
+        if event.get("red_flags"):
+            st.markdown("**レッドフラッグ**")
+            for item in event["red_flags"]:
+                st.write(f"- {item}")
+
     st.markdown("### 現場の状況ログ")
-   
+    st.divider()
 
     npcs = event.get("npcs", [])
     if npcs:
@@ -322,58 +318,6 @@ def render_play() -> None:
             st.session_state["last_result"] = result_dict
             st.rerun()
 
-
-def summarize_effects_as_ai_feedback(effects: dict) -> str:
-    if not effects:
-        return "今回の行動による目立った変化はありませんでした。"
-
-    label_map = {
-        "trust": "チームの信頼",
-        "safety": "心理的安全性",
-        "performance": "業績",
-        "transparency": "透明性",
-        "evidence": "証拠保全",
-        "boundaries": "境界設定",
-        "protection": "被害者保護",
-        "retaliation_risk": "報復リスク",
-        "contamination_risk": "組織汚染度",
-        "faction_risk": "分断リスク",
-    }
-
-    improved = []
-    worsened = []
-
-    for key, value in effects.items():
-        if value == 0:
-            continue
-
-        label = label_map.get(key, key)
-
-        # リスク系は「下がる」と良い変化
-        if key in ["retaliation_risk", "contamination_risk", "faction_risk"]:
-            if value < 0:
-                improved.append(f"{label}は少し下がりました")
-            else:
-                worsened.append(f"{label}はやや高まりました")
-        else:
-            if value > 0:
-                improved.append(f"{label}は少し改善しました")
-            else:
-                worsened.append(f"{label}はやや低下しました")
-
-    parts = []
-
-    if improved:
-        parts.append("、".join(improved))
-    if worsened:
-        parts.append("、".join(worsened))
-
-    if not parts:
-        return "今回の行動による目立った変化はありませんでした。"
-
-    return "AIの判断では、" + "。また、".join(parts) + "。"
-
-
     render_last_result()
 
     st.divider()
@@ -382,6 +326,7 @@ def summarize_effects_as_ai_feedback(effects: dict) -> str:
         st.dataframe(pd.DataFrame(game["history"]), use_container_width=True)
     else:
         st.write("まだ行動履歴はありません。")
+
 
 
 def render_status() -> None:
@@ -419,39 +364,6 @@ def render_learning() -> None:
         """
     )
 
-    st.divider()
-    st.subheader("ターン解説")
-
-    max_turns = int(st.session_state.game.get("max_turns", 3))
-
-    for turn in range(1, max_turns + 1):
-        event = get_turn_event_for_hint(turn)
-        stage_name = STAGE_LABELS.get(turn, f"TURN {turn}")
-
-        st.markdown(f"### TURN {turn}: {stage_name}")
-
-        severity = event.get("severity", "中")
-        defense_focus = event.get("defense_focus", [])
-        risk_tags = event.get("risk_tags", [])
-        worldview_markers = event.get("worldview_markers", [])
-        red_flags = event.get("red_flags", [])
-
-        st.info(
-            f"**深刻度**: {severity}\n\n"
-            f"**防衛重点**: {', '.join(defense_focus) if defense_focus else 'なし'}"
-        )
-
-        st.write(f"**リスクタグ**: {' / '.join(risk_tags) if risk_tags else 'なし'}")
-        st.write(f"**兆候**: {' / '.join(worldview_markers) if worldview_markers else 'なし'}")
-
-        st.markdown("**レッドフラッグ**")
-        if red_flags:
-            for item in red_flags:
-                st.write(f"- {item}")
-        else:
-            st.write("- なし")
-
-        st.divider()
 
 
 def main() -> None:
